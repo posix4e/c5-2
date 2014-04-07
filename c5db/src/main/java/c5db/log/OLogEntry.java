@@ -71,6 +71,10 @@ public class OLogEntry implements SequentialEntry {
     return new LogEntry(electionTerm, seqNum, buffers);
   }
 
+  public static OLogEntry fromProtostuffMessage(LogEntry entry) {
+    return new OLogEntry(entry.getIndex(), entry.getTerm(), entry.getDataList());
+  }
+
   @Override
   public boolean equals(Object o) {
     if (o == null || (o.getClass() != this.getClass())) {

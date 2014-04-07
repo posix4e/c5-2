@@ -47,7 +47,11 @@ public class LogService extends AbstractService implements LogModule {
       LogFileService logFileService = new LogFileService(server.getConfigDirectory().getBaseConfigPath());
       KeySerializingExecutor executor = new KeySerializingExecutor(
           Executors.newFixedThreadPool(C5ServerConstants.WAL_THREAD_POOL_SIZE));
-      this.oLog = new QuorumDelegatingLog(logFileService, executor);
+      this.oLog = new QuorumDelegatingLog(
+          logFileService,
+          executor,
+          NavigableMapTermOracle::new,
+          InMemoryPersistenceNavigator::new);
 
       // TODO start the flush threads as necessary
       // TODO log maintenance threads can go here too.

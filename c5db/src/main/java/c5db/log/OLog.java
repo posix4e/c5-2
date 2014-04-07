@@ -74,14 +74,6 @@ public interface OLog extends AutoCloseable {
   ListenableFuture<Boolean> truncateLog(long entryIndex, String quorumId);
 
   /**
-   * Flush all pending writes to the physical medium.
-   * TODO should this also be specified to sync with any indexing provider?
-   *
-   * @return Future indicating completion or exception.
-   */
-  ListenableFuture<Boolean> sync();
-
-  /**
    * Retrieve the "term" (i.e., leader or election term) corresponding to the given pair (index, quorum)
    *
    * @param index    Log entry index
@@ -101,11 +93,9 @@ public interface OLog extends AutoCloseable {
   void roll() throws IOException, ExecutionException, InterruptedException;
 
   /**
-   * Dispose of held resources. This method does not perform a sync() first -- the caller should sync if necessary.
-   * The rationale for not performing a sync is to give the caller flexibility with whether or not to close
-   * immediately, or asynchronously.
+   * Dispose of held resources after completing any pending operations.
    *
-   * @throws IOException If an error occurs closing a file stream.
+   * @throws IOException
    */
   void close() throws IOException;
 
