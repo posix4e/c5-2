@@ -19,8 +19,10 @@ package c5db.log;
 
 import c5db.replication.generated.LogEntry;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -37,7 +39,19 @@ public class MooringTest {
   public JUnitRuleMockery context = new JUnitRuleMockery();
   private final OLog oLog = context.mock(OLog.class);
   private final String quorumId = "quorumId";
-  private final ReplicatorLog log = new Mooring(oLog, quorumId);
+  private ReplicatorLog log;
+
+  @Before
+  public void accessesOLogToObtainTheLastTermAndIndexWhenItIsConstructed() throws Exception {
+    context.checking(new Expectations() {{
+      oneOf(oLog).getLastSeqNum(quorumId);
+      will(returnValue(Futures.immediateFuture(0L)));
+      oneOf(oLog).getLastTerm(quorumId);
+      will(returnValue(Futures.immediateFuture(0L)));
+    }});
+
+    log = new Mooring(oLog, quorumId);
+  }
 
   @Test
   public void returnsZeroFromGetLastTermWhenLogIsEmpty() {

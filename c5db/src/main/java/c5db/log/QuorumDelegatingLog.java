@@ -154,6 +154,20 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   }
 
   @Override
+  public ListenableFuture<Long> getLastSeqNum(String quorumId) {
+    return taskExecutor.submit(quorumId, () -> {
+      return quorumLog(quorumId).getLastEntry().getSeqNum();
+    });
+  }
+
+  @Override
+  public ListenableFuture<Long> getLastTerm(String quorumId) {
+    return taskExecutor.submit(quorumId, () -> {
+      return quorumLog(quorumId).getLastEntry().getElectionTerm();
+    });
+  }
+
+  @Override
   public void roll() throws IOException, ExecutionException, InterruptedException {
     // TODO implement roll()
   }

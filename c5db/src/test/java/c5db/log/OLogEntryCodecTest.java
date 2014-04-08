@@ -63,7 +63,7 @@ public class OLogEntryCodecTest {
     ByteBuffer[] encodedBytes = codec.encode(entryToEncode);
     writeBuffersToPipe(encodedBytes, writeToMe);
 
-    long seqNum = codec.skipEntryAndReturnSeqNum(readFromMe);
+    long seqNum = codec.skipEntryAndReturnSequence(readFromMe).getSeqNum();
     assertThat(seqNum, is(equalTo(33L)));
   }
 

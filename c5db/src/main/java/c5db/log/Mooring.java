@@ -22,7 +22,9 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.max;
 
@@ -37,14 +39,21 @@ import static java.lang.Math.max;
  * most cases these never need to access OLog.
  */
 public class Mooring implements ReplicatorLog {
+  private static final int LOG_TIMEOUT = 10; // seconds
   final OLog log;
   final String quorumId;
-  long currentTerm = 0;
-  long lastIndex = 0;
+  long currentTerm;
+  long lastIndex;
 
-  Mooring(OLog log, String quorumId) {
+  Mooring(OLog log, String quorumId) throws IOException {
     this.quorumId = quorumId;
     this.log = log;
+    try {
+      this.currentTerm = log.getLastTerm(quorumId).get(LOG_TIMEOUT, TimeUnit.SECONDS);
+      this.lastIndex = log.getLastSeqNum(quorumId).get(LOG_TIMEOUT, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
   }
 
   @Override

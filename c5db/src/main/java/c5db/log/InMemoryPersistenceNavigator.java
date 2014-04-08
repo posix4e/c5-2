@@ -17,6 +17,9 @@
 
 package c5db.log;
 
+import com.google.common.collect.Lists;
+import io.protostuff.ProtobufException;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,6 +27,7 @@ import java.nio.channels.Channels;
 
 import static c5db.log.EncodedSequentialLog.Codec;
 import static c5db.log.EncodedSequentialLog.LogEntryNotFound;
+import static c5db.log.EntryEncodingUtil.CrcError;
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
 import static c5db.log.LogPersistenceService.PersistenceReader;
@@ -66,7 +70,7 @@ public class InMemoryPersistenceNavigator<E extends SequentialEntry> implements 
     try {
       while (true) {
         long address = reader.position();
-        long seqNum = codec.skipEntryAndReturnSeqNum(inputStream);
+        long seqNum = codec.skipEntryAndReturnSequence(inputStream).getSeqNum();
         if (toSeqNum == seqNum) {
           reader.position(address);
           return reader;
@@ -75,5 +79,24 @@ public class InMemoryPersistenceNavigator<E extends SequentialEntry> implements 
     } catch (EOFException e) {
       throw new LogEntryNotFound(e);
     }
+  }
+
+  @Override
+  public SequentialEntry getLastEntry() throws IOException {
+    PersistenceReader reader = persistence.getReader();
+    InputStream inputStream = Channels.newInputStream(reader);
+
+    // TODO apply indexing information
+    SequentialEntry entry = new OLogEntry(0, 0, Lists.newArrayList());
+    try {
+      //noinspection InfiniteLoopStatement
+      while (true) {
+        entry = codec.skipEntryAndReturnSequence(inputStream);
+      }
+    } catch (EOFException | CrcError | ProtobufException ignore) {
+      // TODO CrcError or ProtobufException, here as elsewhere should probably result in a truncation.
+    }
+
+    return entry;
   }
 }

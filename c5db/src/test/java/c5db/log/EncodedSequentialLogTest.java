@@ -95,6 +95,15 @@ public class EncodedSequentialLogTest {
     log.truncate(seqNum(7));
   }
 
+  @Test
+  public void canReturnTheLastEntryInTheLog() throws Exception {
+    context.checking(new Expectations() {{
+      oneOf(navigator).getLastEntry();
+    }});
+
+    log.getLastEntry();
+  }
+
   private List<OLogEntry> someConsecutiveEntries(int start, int end) {
     List<OLogEntry> entries = Lists.newArrayList();
     for (int i = start; i < end; i++) {

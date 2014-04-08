@@ -62,15 +62,14 @@ public class EncodedSequentialLog<E extends SequentialEntry> implements Sequenti
     E decode(InputStream inputStream) throws IOException, CrcError;
 
     /**
-     * Skip over an entry in the input stream, returning the sequence number of the entry
-     * encountered.
+     * Skip over an entry in the input stream, returning the entry encountered as a SequentialEntry.
      *
      * @param inputStream An open input stream, positioned at the start of an entry.
      * @return The sequence number of the entry encountered.
      * @throws CrcError
      * @throws IOException
      */
-    long skipEntryAndReturnSeqNum(InputStream inputStream) throws IOException, CrcError;
+    SequentialEntry skipEntryAndReturnSequence(InputStream inputStream) throws IOException, CrcError;
   }
 
   public EncodedSequentialLog(LogPersistenceService.BytePersistence persistence,
@@ -106,6 +105,11 @@ public class EncodedSequentialLog<E extends SequentialEntry> implements Sequenti
     }
 
     return readEntries;
+  }
+
+  @Override
+  public SequentialEntry getLastEntry() throws IOException {
+    return persistenceNavigator.getLastEntry();
   }
 
   @Override

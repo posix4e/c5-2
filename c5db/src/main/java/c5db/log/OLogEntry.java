@@ -136,10 +136,10 @@ public class OLogEntry implements SequentialEntry {
     }
 
     @Override
-    public long skipEntryAndReturnSeqNum(InputStream inputStream) throws IOException {
+    public SequentialEntry skipEntryAndReturnSequence(InputStream inputStream) throws IOException {
       final OLogEntryHeader header = decodeAndCheckCrc(inputStream, SCHEMA);
       skipContent(inputStream, header.getContentLength());
-      return header.getSeqNum();
+      return new OLogEntry(header.getSeqNum(), header.getTerm(), Lists.newArrayList());
     }
 
     private void skipContent(InputStream inputStream, int contentLength) throws IOException {

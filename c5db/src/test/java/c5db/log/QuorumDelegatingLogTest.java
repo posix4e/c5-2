@@ -38,6 +38,7 @@ import static c5db.log.EncodedSequentialLog.LogEntryNotInSequence;
 import static c5db.log.LogTestUtil.emptyEntryList;
 import static c5db.log.LogTestUtil.makeEntry;
 import static c5db.log.LogTestUtil.makeSingleEntryList;
+import static c5db.log.LogTestUtil.seqNum;
 import static c5db.log.LogTestUtil.term;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
@@ -212,6 +213,34 @@ public class QuorumDelegatingLogTest {
     log.logEntry(replacementEntries, quorumId);
 
     assertThat(log.getLogEntries(5, 10, quorumId), resultsIn(equalTo(replacementEntries)));
+  }
+
+  @Test
+  public void canReturnTheLastSequenceNumberAndTermInTheLog() throws Exception {
+    log.logEntry(someConsecutiveEntries(1, 10), quorumId);
+    log.logEntry(makeSingleEntryList(seqNum(10), term(100), someData()), quorumId);
+
+    assertThat(log.getLastTerm(quorumId), resultsIn(equalTo(100L)));
+    assertThat(log.getLastSeqNum(quorumId), resultsIn(equalTo(10L)));
+  }
+
+  @Test(timeout = 1000)
+  public void correctlyReturnsLastSequenceNumberAndTermAfterATruncation() throws Exception {
+    log.logEntry(someConsecutiveEntries(1, 5), quorumId);
+    long term = log.getLastTerm(quorumId).get() + 1;
+
+    log.logEntry(makeSingleEntryList(seqNum(5), term, someData()), quorumId);
+    log.logEntry(makeSingleEntryList(seqNum(6), term + 1, someData()), quorumId);
+    log.truncateLog(6, quorumId);
+
+    assertThat(log.getLastSeqNum(quorumId), resultsIn(equalTo(5L)));
+    assertThat(log.getLastTerm(quorumId), resultsIn(equalTo(term)));
+  }
+
+  @Test
+  public void returnsZeroForLastSequenceNumberAndTermWhenThatQuorumHasNoEntries() throws Exception {
+    assertThat(log.getLastTerm(quorumId), resultsIn(equalTo(0L)));
+    assertThat(log.getLastSeqNum(quorumId), resultsIn(equalTo(0L)));
   }
 
   /**
