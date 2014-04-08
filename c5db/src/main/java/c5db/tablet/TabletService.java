@@ -19,7 +19,6 @@ package c5db.tablet;
 
 import c5db.C5ServerConstants;
 import c5db.ConfigDirectory;
-import c5db.generated.Log;
 import c5db.interfaces.C5Module;
 import c5db.interfaces.C5Server;
 import c5db.interfaces.DiscoveryModule;
@@ -356,56 +355,6 @@ public class TabletService extends AbstractService implements TabletModule {
       }
     }, fiber);
   }
-
-  private void logReplay(final Path path) throws IOException {
-    java.nio.file.Path archiveLogPath = Paths.get(path.toString(), C5ServerConstants.ARCHIVE_DIR);
-    File[] archiveLogs = archiveLogPath.toFile().listFiles();
-
-    if (archiveLogs == null) {
-      return;
-    }
-
-    for (File log : archiveLogs) {
-      FileInputStream rif = new FileInputStream(log);
-      processLogFile(rif);
-      for (HRegion r : onlineRegions.values()) {
-        r.flushcache();
-      }
-    }
-    for (HRegion r : onlineRegions.values()) {
-      r.compactStores();
-    }
-
-    for (HRegion r : onlineRegions.values()) {
-      r.waitForFlushesAndCompactions();
-    }
-
-    //TODO WE SHOULDN'T BE ONLINE TIL THIS HAPPENS
-  }
-
-  private void processLogFile(FileInputStream rif) throws IOException {
-    Log.OLogEntry entry;
-    Log.Entry edit;
-    do {
-      entry = Log.OLogEntry.parseDelimitedFrom(rif);
-      // if ! at EOF                      z
-      if (entry != null) {
-        edit = Log.Entry.parseFrom(entry.getValue());
-        HRegion recoveryRegion = onlineRegions.get(edit.getRegionInfo());
-
-        if (recoveryRegion.getLastFlushTime() >= edit.getTs()) {
-          Put put = new Put(edit.getKey().toByteArray());
-          put.add(edit.getFamily().toByteArray(),
-              edit.getColumn().toByteArray(),
-              edit.getTs(),
-              edit.getValue().toByteArray());
-          put.setDurability(Durability.SKIP_WAL);
-          recoveryRegion.put(put);
-        }
-      }
-    } while (entry != null);
-  }
-
 
   @Override
   protected void doStop() {
