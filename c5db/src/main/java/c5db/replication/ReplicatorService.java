@@ -351,9 +351,8 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
       @Override
       public void onMessage(DiscoveryModule.NodeInfoReply nodeInfoReply) {
         if (!nodeInfoReply.found) {
-          LOG.debug("Can't find the info for the peer {}", to);
-          // TODO signal TCP/transport layer failure in a better way
-          //message.reply(null);
+          LOG.trace("Can't find the info for the peer {}", to);
+          // TODO keep track of how many failures, and publish this information.
           return;
         }
 

@@ -250,7 +250,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     electionChecker = fiber.scheduleWithFixedDelay(this::checkOnElection,
         info.electionCheckRate(), info.electionCheckRate(), TimeUnit.MILLISECONDS);
 
-    LOG.debug("{} primed {}", myId, this.quorumId);
+    LOG.debug("{} primed-debug {}", myId, this.quorumId);
 
     setCurrentTerm(term);
     this.myState = state;

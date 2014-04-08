@@ -330,10 +330,10 @@ public class C5DB extends AbstractService implements C5Server {
     }
   }
 
-  private class ModuleListenerPublisher implements Listener {
+  private class ModuleStatePublisher implements Listener {
     private final C5Module module;
 
-    private ModuleListenerPublisher(C5Module module) {
+    private ModuleStatePublisher(C5Module module) {
       this.module = module;
     }
 
@@ -428,7 +428,7 @@ public class C5DB extends AbstractService implements C5Server {
 
   private void startServiceModule(C5Module module) {
     LOG.info("Starting service {}", module.getModuleType());
-    module.addListener(new ModuleListenerPublisher(module), serverFiber);
+    module.addListener(new ModuleStatePublisher(module), serverFiber);
 
     module.start();
     moduleRegistry.put(module.getModuleType(), module);
