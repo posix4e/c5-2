@@ -18,6 +18,7 @@ package c5db.driver;
 
 import c5db.ConfigDirectory;
 import c5db.NioFileConfigDirectory;
+import com.google.common.collect.ImmutableList;
 
 import java.nio.file.Paths;
 
@@ -25,6 +26,9 @@ import java.nio.file.Paths;
  * Run a little test server.
  */
 public class Main {
+  public static final ImmutableList<Long> PEERS = ImmutableList.of(1L, 2L, 3L);
+  public static final String THE_ONLY_QUORUM = "the-only-quorum";
+
   private static Server serverInstance;
 
   public static void main(String[] args) throws Exception {
@@ -46,7 +50,5 @@ public class Main {
     serverInstance = new Server(configDirectory);
 
     serverInstance.start();
-
-
   }
 }

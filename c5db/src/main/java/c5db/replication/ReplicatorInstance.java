@@ -347,11 +347,19 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
       // we can vote for this because the candidate's log is at least as
       // complete as the local log.
 
+      LOG.debug("{} Voting for {} because they are at least as complete as my log, terms: {} (them {}), indexes: {} (them {})",
+          myId, message.getRequest().from, log.getLastTerm(), msg.getLastLogTerm(),
+          log.getLastIndex(), msg.getLastLogIndex());
+
       if (votedFor == 0 || votedFor == message.getRequest().from) {
         setVotedFor(message.getRequest().from);
         lastRPC = info.currentTimeMillis();
         vote = true;
       }
+    } else {
+      LOG.debug("{} unable to vote for {}, terms: {} (them {}), indexes: {} (them {})",
+          myId, message.getRequest().from, log.getLastTerm(), msg.getLastLogTerm(),
+          log.getLastIndex(), msg.getLastLogIndex());
     }
 
     LOG.debug("{} sending vote reply to {} vote = {}, voted = {}", myId, message.getRequest().from, votedFor, vote);

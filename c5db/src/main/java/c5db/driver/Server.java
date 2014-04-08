@@ -17,7 +17,6 @@
 package c5db.driver;
 
 import c5db.ConfigDirectory;
-import c5db.NioFileConfigDirectory;
 import c5db.discovery.BeaconService;
 import c5db.interfaces.C5Module;
 import c5db.interfaces.C5Server;
@@ -31,11 +30,9 @@ import c5db.util.C5Futures;
 import c5db.util.ExceptionHandlingBatchExecutor;
 import c5db.util.FiberOnly;
 import c5db.util.PoolFiberFactoryWithExecutor;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.protostuff.Message;
@@ -50,18 +47,17 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.SocketException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-/**
- *
- */
 public class Server extends AbstractService implements C5Server {
   private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
@@ -74,6 +70,8 @@ public class Server extends AbstractService implements C5Server {
   private final ConfigDirectory configDirectory;
   private final Map<ModuleType, C5Module> allModules = new HashMap<>();
   private final Channel<ModuleStateChange> serviceRegisteredNotices = new MemoryChannel<>();
+  private ReplicationModule.Replicator theOnlyReplicator = null;
+  private Disposable dataLogger = null;
 
   public Server(ConfigDirectory configDirectory) throws IOException {
     this.configDirectory = configDirectory;
@@ -135,19 +133,52 @@ public class Server extends AbstractService implements C5Server {
           replicatorService);
 
       // required to number the 3 nodes 1,2,3, to change modify here.
-      C5Futures.addCallback(replicatorService.createReplicator("the-only-quorum", ImmutableList.of(1L, 2L, 3L)),
+      C5Futures.addCallback(replicatorService.createReplicator(Main.THE_ONLY_QUORUM, Main.PEERS),
           replicator -> {
+            Server.this.theOnlyReplicator = replicator;
+            replicator.getStateChannel().subscribe(serverFiber, state -> {
+              if (state == ReplicationModule.Replicator.State.LEADER) {
+                dataLogger = serverFiber.scheduleAtFixedRate(this::insertData, 1, 1, TimeUnit.SECONDS);
+              } else {
+                // if we have a datalogger, we are no longer leader, and therefore should remove it
+                if (dataLogger != null) {
+                  dataLogger.dispose();
+                  dataLogger = null;
+                }
+              }
+            });
+
             replicator.start();
           }, failureCause -> {
             LOG.error("Unable to start replicator", failureCause);
           }, serverFiber);
 
-      // TODO start a data insertion task
     } catch (InterruptedException|SocketException e) {
       LOG.error("Startup failure due to exception", e);
     }
   }
 
+  private void insertData() {
+    assert theOnlyReplicator != null;
+
+    List<ByteBuffer> randomData = randomData(200);
+
+    try {
+      theOnlyReplicator.logData(randomData);
+    } catch (InterruptedException e) {
+      LOG.warn("insertData got IE", e);
+    }
+  }
+
+  private Random randomDataSource = new Random();
+  private List<ByteBuffer> randomData(int byteLengthToGenerate) {
+    byte[] bytesDatum = new byte[byteLengthToGenerate];
+    randomDataSource.nextBytes(bytesDatum);
+
+    List<ByteBuffer> returnedList = new ArrayList<>();
+    returnedList.add(ByteBuffer.wrap(bytesDatum));
+    return returnedList;
+  }
 
 
   @Override
