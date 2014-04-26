@@ -246,9 +246,11 @@ public class C5ServerHandler extends SimpleChannelInboundHandler<Call> {
       final Fiber fiber = new ThreadFiber();
       fiber.start();
       channel = new MemoryChannel<>();
-
-      final ScanRunnable scanRunnable = new ScanRunnable(ctx, call, scannerId,
-          regionServerService.getOnlineRegion(call.getScan().getRegion()));
+      HRegion region = regionServerService.getOnlineRegion(call.getScan().getRegion());
+      if (region == null){
+        throw new IOException("Unable to find region");
+      }
+      final ScanRunnable scanRunnable = new ScanRunnable(ctx, call, scannerId,region);
       channel.subscribe(fiber, scanRunnable);
       scanManager.addChannel(scannerId, channel);
     }

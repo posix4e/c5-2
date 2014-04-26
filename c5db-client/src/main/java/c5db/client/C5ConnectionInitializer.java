@@ -49,7 +49,7 @@ class C5ConnectionInitializer extends ChannelInitializer<SocketChannel> {
   protected void initChannel(SocketChannel ch) throws Exception {
     decoder = new WebsocketProtostuffDecoder(handShaker);
     final ChannelPipeline pipeline = ch.pipeline();
-    pipeline.addLast("logger", new LoggingHandler(LogLevel.DEBUG));
+    pipeline.addLast("logger", new LoggingHandler(LogLevel.TRACE));
     pipeline.addLast("http-client", new HttpClientCodec());
     pipeline.addLast("aggregator", new HttpObjectAggregator(C5Constants.MAX_RESPONSE_SIZE));
     pipeline.addLast("websec-codec", new WebsocketProtostuffEncoder(handShaker));

@@ -99,7 +99,7 @@ public class RegionServerService extends AbstractService implements RegionServer
                               @Override
                               protected void initChannel(SocketChannel ch) throws Exception {
                                 ChannelPipeline p = ch.pipeline();
-                                p.addLast("logger", new LoggingHandler(LogLevel.DEBUG));
+                                p.addLast("logger", new LoggingHandler(LogLevel.TRACE));
                                 p.addLast("http-server-codec", new HttpServerCodec());
                                 p.addLast("http-agg", new HttpObjectAggregator(C5ServerConstants.MAX_CALL_SIZE));
                                 p.addLast("websocket-agg", new WebSocketFrameAggregator(C5ServerConstants.MAX_CALL_SIZE));
