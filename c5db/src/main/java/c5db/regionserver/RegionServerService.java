@@ -25,6 +25,8 @@ import c5db.interfaces.C5Module;
 import c5db.interfaces.C5Server;
 import c5db.interfaces.RegionServerModule;
 import c5db.interfaces.TabletModule;
+import c5db.interfaces.server.CommandRpcRequest;
+import c5db.messages.generated.ModuleSubCommand;
 import c5db.messages.generated.ModuleType;
 import c5db.util.C5FiberFactory;
 import com.google.common.util.concurrent.AbstractService;
@@ -43,11 +45,17 @@ import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketFrameAggregator;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.protostuff.ByteString;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.jetlang.fibers.Fiber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.misc.BASE64Encoder;
 
 /**
  * The service handler for the RegionServer class. Responsible for handling the internal lifecycle
@@ -117,6 +125,33 @@ public class RegionServerService extends AbstractService implements RegionServer
               notifyFailed(future.cause());
             }
           });
+
+          if (System.getProperties().containsKey("testTable")) {
+            ByteString tableNameBytes = ByteString.copyFrom(Bytes.toBytes("testTable"));
+            TableName tableName = TableName.valueOf(tableNameBytes.toByteArray());
+            HTableDescriptor testDesc = new HTableDescriptor(tableName);
+            testDesc.addFamily(new HColumnDescriptor("cf"));
+            HRegionInfo testRegion = new HRegionInfo(tableName, new byte[]{0}, new byte[]{}, false, 1);
+            String peerString = String.valueOf(server.getNodeId());
+            BASE64Encoder encoder = new BASE64Encoder();
+
+            String hTableDesc = encoder.encodeBuffer(testDesc.toByteArray());
+            String hRegionInfo = encoder.encodeBuffer(testRegion.toByteArray());
+
+            String createString =  C5ServerConstants.CREATE_TABLE
+                + ":"
+                + hTableDesc
+                + ","
+                + hRegionInfo
+                + ","
+                + peerString;
+
+
+            ModuleSubCommand moduleSubCommand = new ModuleSubCommand(ModuleType.Tablet,createString);
+            CommandRpcRequest commandRpcRequest = new CommandRpcRequest(server.getNodeId(), moduleSubCommand);
+            server.getCommandChannel().publish(commandRpcRequest);
+            LOG.warn("Creating test table");
+          }
         }
 
         @Override

@@ -16,6 +16,7 @@
  */
 package c5db.client;
 
+import c5db.C5ServerConstants;
 import c5db.MiniClusterBase;
 import io.protostuff.ByteString;
 import org.apache.hadoop.hbase.client.Put;
@@ -30,7 +31,7 @@ import java.util.concurrent.TimeoutException;
 public class Populator extends MiniClusterBase {
 
 
-  private static ByteString tableName;
+  private static ByteString tableName = ByteString.bytesDefaultValue("testTable");
 
   public Populator() throws IOException, InterruptedException {
 
@@ -39,17 +40,18 @@ public class Populator extends MiniClusterBase {
 
   public static void main(String[] args)
       throws IOException, InterruptedException {
+    int port;
     if (args.length < 1) {
-      System.out.println("Include the port to talk to please");
-      return;
+      port = 31337;
+    } else {
+      port = Integer.parseInt(args[0]);
     }
-    int port = Integer.parseInt(args[0]);
     try (C5Table table = new C5Table(tableName, port)) {
 
       long start = System.currentTimeMillis();
 
-      int numberOfBatches = 1;
-      int batchSize = 1024 * 5;
+      int numberOfBatches = 30;
+      int batchSize = 1024 * 81;
       if (args.length == 2) {
         numberOfBatches = Integer.parseInt(args[0]);
         batchSize = Integer.parseInt(args[1]);
@@ -94,7 +96,7 @@ public class Populator extends MiniClusterBase {
           System.out.flush();
           startTime = System.nanoTime();
         }
-        if (i % (1024 * 80) == 0) {
+        if (i % (1024 * 12) == 0) {
           System.out.println("");
         }
         table.put(put);

@@ -18,8 +18,18 @@ package c5db;
 
 import c5db.interfaces.C5Server;
 import c5db.interfaces.server.CommandRpcRequest;
+import c5db.messages.generated.ModuleSubCommand;
 import c5db.messages.generated.ModuleType;
 import c5db.messages.generated.StartModule;
+import io.protostuff.ByteString;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import sun.misc.BASE64Encoder;
 
 import java.nio.file.Paths;
 import java.util.Random;
@@ -28,6 +38,7 @@ import java.util.Random;
  * CLI Entry point for the C5DB server.
  */
 public class Main {
+  private static final Logger LOG = LoggerFactory.getLogger(Main.class);
 
   public static void main(String[] args) throws Exception {
     C5Server instance = startC5Server(args);
@@ -88,6 +99,7 @@ public class Main {
 
     StartModule startRegionServer = new StartModule(ModuleType.RegionServer, regionServerPort, "");
     instance.getCommandChannel().publish(new CommandRpcRequest<>(nodeId, startRegionServer));
+
     return instance;
   }
 }

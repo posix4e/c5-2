@@ -138,6 +138,9 @@ public class C5ServerHandler extends SimpleChannelInboundHandler<Call> {
     MutateResponse mutateResponse;
     try {
       final HRegion region = regionServerService.getOnlineRegion(call.getMutate().getRegion());
+      if (region == null){
+        throw new IOException("Unable to find region");
+      }
       final MutationProto.MutationType type = mutateIn.getMutation().getMutateType();
       switch (type) {
         case PUT:
