@@ -77,7 +77,7 @@ public class StartedRootOnTabletServiceTest extends TabletServiceTest {
         oneOf(replicator).getStateChannel();
         will(returnValue(stateChannel));
 
-        oneOf(replicator).getEventChannel();
+        allowing(replicator).getEventChannel();
         will(returnValue(stateChangeChannel));
 
         allowing(configDirectory).writeBinaryData(with(any(String.class)), with(any(String.class)), with(any(byte[].class)));
@@ -91,7 +91,7 @@ public class StartedRootOnTabletServiceTest extends TabletServiceTest {
         oneOf(replicator).getQuorumId();
         will(returnValue("hbase:root,,1.9e44d7942d3598d55c758b7b83373c71."));
 
-        oneOf(replicator).getId();
+        allowing(replicator).getId();
         oneOf(replicator).getCommitNoticeChannel();
 
         allowing(replicator).logData(with(any(List.class)));
@@ -106,6 +106,7 @@ public class StartedRootOnTabletServiceTest extends TabletServiceTest {
     AsyncChannelAsserts.ChannelListener<TabletStateChange> tabletStateListener
         = listenTo(tabletService.getTabletStateChanges());
 
+    assertEventually(tabletStateListener, hasMessageWithState(Tablet.State.CreatingReplicator));
     assertEventually(tabletStateListener, hasMessageWithState(Tablet.State.Open));
 
     stateChannel.publish(Replicator.State.LEADER);
