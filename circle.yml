@@ -2,12 +2,10 @@ machine:
   java:
     version: oraclejdk8
 dependencies:
-  override:
-    - mvn clean install -DskipTests
   cache_directories:
     - ~/.m2
 test:
   override:
-    - set -x ; pwd;ls;./split_across_ci.sh:
-        parallel: true
-        timeout: 1800
+    - mvn test
+  post:
+    - mvn failsafe:integration-test
