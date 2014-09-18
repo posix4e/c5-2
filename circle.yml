@@ -6,7 +6,6 @@ dependencies:
     - ~/.m2
 test:
   override:
-    - mvn:
-        parallel: true
-        files:
-          - case $CIRCLE_NODE_INDEX in 0) mvn test ;; 1) mvn test-compile failsafe:integration-test ;; esac:
+    - case $CIRCLE_NODE_INDEX in 0) mvn test ;; 1) mvn test-compile failsafe:integration-test ;; esac:
+      parallel: true
+      timeout: 1802
