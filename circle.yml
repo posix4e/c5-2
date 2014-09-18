@@ -8,6 +8,5 @@ test:
   override:
     - mvn test
   post:
-    - mvn verify -DskipTests:
-      timeout: 1800
+    - mvn verify -DskipTests
 
