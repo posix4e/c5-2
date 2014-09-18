@@ -6,7 +6,8 @@ dependencies:
     - ~/.m2
 test:
   override:
-    - case $CIRCLE_NODE_INDEX in 0) mvn test ;; 1) mvn verify -DskipTests ;; esac:
-      parallel: true
+    - mvn test
+  post:
+    - mvn verify -DskipTests:
       timeout: 1800
 
